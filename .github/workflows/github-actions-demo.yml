@@ -1,0 +1,39 @@
+name: Deploy SPA
+
+on:
+  push:
+    branches:
+      - main  # Trigger the workflow when a push happens to the 'main' branch
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest  # The runner environment
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22' # Use a specific Node.js version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build the app
+        run: npm run build # This command creates the production build
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Remove old build files
+            rm -rf /srv/test/*
+            # Copy new files from the runner to the server
+            cp -r build /srv/test/
+            # (Optional) Restart the web server if needed, though for an SPA this is usually not required.
+            # sudo systemctl restart nginx
