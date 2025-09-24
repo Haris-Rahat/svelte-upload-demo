@@ -34,6 +34,6 @@ jobs:
             # Remove old build files
             rm -rf /srv/test/*
             # Copy new files from the runner to the server
-            cp -r build /srv/test/
+            cp -r dist/* /srv/test/
             # (Optional) Restart the web server if needed, though for an SPA this is usually not required.
             # sudo systemctl restart nginx
