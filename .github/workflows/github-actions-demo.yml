@@ -3,11 +3,11 @@ name: Deploy SPA
 on:
   push:
     branches:
-      - main  # Trigger the workflow when a push happens to the 'main' branch
+      - main  # Trigger workflow when pushing to main
 
 jobs:
   build_and_deploy:
-    runs-on: ubuntu-latest  # The runner environment
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
@@ -16,24 +16,33 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '22' # Use a specific Node.js version
+          node-version: '22' # Adjust to match your project
 
       - name: Install dependencies
         run: npm install
 
       - name: Build the app
-        run: npm run build # This command creates the production build
+        run: npm run build # Creates dist/ folder
 
-      - name: Deploy to server
+      # ✅ Copy dist/ to server
+      - name: Copy dist folder to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "dist/*"
+          target: "/srv/test/"
+
+      # ✅ Run remote commands (optional cleanup/restart)
+      - name: Clean and restart service
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Remove old build files
-            rm -rf /srv/test/*
-            # Copy new files from the runner to the server
-            cp -r dist/* /srv/test/
-            # (Optional) Restart the web server if needed, though for an SPA this is usually not required.
+            # Optional: ensure folder exists
+            # mkdir -p /srv/test
+            # Restart nginx (if required)
             # sudo systemctl restart nginx
